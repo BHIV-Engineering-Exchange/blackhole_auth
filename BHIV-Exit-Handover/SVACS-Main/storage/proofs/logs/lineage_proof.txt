@@ -1,0 +1,36 @@
+{
+    "execution_id": "exec_f11a582c",
+    "trace_id": "trace_3cc7bea8",
+    "lineage": [
+        {
+            "stage": "SIGNAL", 
+            "service": "SIGNAL",
+            "status": "COMPLETED",
+            "timestamp": "2026-05-14T12:03:01.277523"
+        },
+        {
+            "stage": "PERCEPTION",
+            "service": "PERCEPTION",
+            "status": "COMPLETED",
+            "timestamp": "2026-05-14T12:03:01.280238"
+        },
+        {
+            "stage": "INTELLIGENCE",
+            "service": "INTELLIGENCE",
+            "status": "COMPLETED",
+            "timestamp": "2026-05-14T12:03:01.281966"
+        },
+        {
+            "stage": "STATE",
+            "service": "STATE",
+            "status": "COMPLETED",
+            "timestamp": "2026-05-14T12:03:01.283608"
+        },
+        {
+            "stage": "CONTRACT",
+            "service": "CONTRACT",
+            "status": "MUTATION_REJECTED",
+            "timestamp": "2026-05-14T12:03:01.285887"
+        }
+    ]
+}

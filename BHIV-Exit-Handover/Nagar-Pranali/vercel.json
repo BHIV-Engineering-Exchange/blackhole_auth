@@ -1,0 +1,6 @@
+{
+  "installCommand": "cd \"UCCIS -Main/frontend\" && npm install",
+  "buildCommand": "cd \"UCCIS -Main/frontend\" && npm run build",
+  "outputDirectory": "UCCIS -Main/frontend/dist",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

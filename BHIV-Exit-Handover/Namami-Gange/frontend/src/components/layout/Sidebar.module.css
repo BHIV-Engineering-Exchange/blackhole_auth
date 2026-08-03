@@ -1,0 +1,242 @@
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: width 0.25s ease;
+  overflow: hidden;
+}
+
+.collapsed {
+  width: var(--sidebar-w-collapsed);
+}
+
+.logo {
+  height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.collapsed .logo {
+  justify-content: center;
+  padding: 0 10px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.logoIcon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  background: linear-gradient(135deg, var(--vessel-blue), var(--signal-cyan));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: var(--text-sm);
+  color: white;
+}
+
+.collapsed .logoIcon {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+}
+
+.logoText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.brand {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.sub {
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.toggleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  margin-left: auto;
+}
+
+.collapsed .toggleBtn {
+  margin-left: 0;
+  width: 100%;
+}
+
+.toggleBtn:hover {
+  background: var(--surface-3);
+  color: var(--text-primary);
+  border-color: var(--border-bright);
+}
+
+.nav {
+  padding: 12px 0;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.collapsed .nav {
+  padding: 8px 0;
+}
+
+.sectionLabel {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-dim);
+  padding: 8px 18px 6px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  padding: 10px 18px;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-left: 3px solid transparent;
+  margin: 1px 0;
+}
+
+.collapsed .navItem {
+  justify-content: center;
+  padding: 10px 8px;
+  border-left: none;
+  border-radius: 6px;
+  margin: 2px 8px;
+}
+
+.navItem:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.active {
+  background: rgba(59, 130, 246, 0.12);
+  border-left-color: var(--vessel-blue);
+}
+
+.collapsed .active {
+  background: rgba(59, 130, 246, 0.18);
+  border-left: none;
+}
+
+.active .label {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.icon {
+  font-size: 16px;
+  width: 20px;
+  min-width: 20px;
+  text-align: center;
+  opacity: 0.9;
+}
+
+.label {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.footer {
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.collapsed .footer {
+  padding: 12px 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.collapsed .user {
+  justify-content: center;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--signal-cyan);
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.userName {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.userRole {
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  font-weight: 400;
+  white-space: nowrap;
+}

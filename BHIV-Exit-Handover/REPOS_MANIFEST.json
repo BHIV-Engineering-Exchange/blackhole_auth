@@ -1,0 +1,20 @@
+{
+  "generated": "2026-07-07",
+  "note": "Original per-product git metadata backed up under .repo-git-backup/<folder>/. Restore by moving back to <folder>/.git",
+  "products": [
+    { "folder": "AI-Artha", "origin": "https://github.com/blackholeinfiverse64/AI-Artha.git" },
+    { "folder": "AI-Content", "origin": "https://github.com/blackholeinfiverse64/AI-Content.git" },
+    { "folder": "Infiverse-HR", "origin": "https://github.com/blackholeinfiverse64/Infiverse-HR.git" },
+    { "folder": "Nagar-Pranali", "origin": "https://github.com/blackholeinfiverse64/Nagar-Pranali.git" },
+    { "folder": "Namami-Gange", "origin": "https://github.com/blackholeinfiverse64/Namami-Gange.git" },
+    { "folder": "PARIKSHAN", "origin": "https://github.com/blackholeinfiverse64/PARIKSHAN.git" },
+    { "folder": "Pradnya", "origin": "https://github.com/blackholeinfiverse64/Pradnya.git" },
+    { "folder": "SVACS-Main", "origin": "https://github.com/blackholeinfiverse64/SVACS-Main.git" },
+    { "folder": "ai-crm", "origin": "https://github.com/blackholeinfiverse64/ai-crm.git" },
+    { "folder": "biometric-blackhole", "origin": "https://github.com/blackholeinfiverse64/biometric-blackhole.git" },
+    { "folder": "blackhole_auth", "origin": "https://github.com/blackholeinfiverse64/blackhole_auth.git" },
+    { "folder": "gurukul-assesment", "origin": "https://github.com/blackholeinfiverse64/gurukul-assesment.git" },
+    { "folder": "hackaverse", "origin": "https://github.com/blackholeinfiverse64/hackaverse.git" },
+    { "folder": "workflow-blackhole", "origin": "https://github.com/blackholeinfiverse64/workflow-blackhole.git" }
+  ]
+}

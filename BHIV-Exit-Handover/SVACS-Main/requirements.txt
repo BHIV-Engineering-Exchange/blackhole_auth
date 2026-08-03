@@ -1,0 +1,12 @@
+flask
+flask-cors
+gunicorn
+requests
+pandas
+numpy
+pytest
+openpyxl
+fastapi
+uvicorn
+pydantic
+python-dotenv
