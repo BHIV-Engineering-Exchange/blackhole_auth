@@ -19,10 +19,14 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    const redirect = encodeURIComponent(window.location.origin);
-    window.location.href = `${AUTH_SERVER}/logout?redirect=${redirect}`;
+  const logout = useCallback(async () => {
+    try {
+      await client.post("/api/logout");
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      setUser(null);
+    }
   }, []);
 
   useEffect(() => {

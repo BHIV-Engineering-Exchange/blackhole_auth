@@ -32,7 +32,7 @@ const DashboardPage = () => {
         setError(`Access denied: ${app.name} is not in your allowed app list.`);
         return;
       }
-      window.location.href = app.url;
+      window.open(app.url, "_blank", "noopener,noreferrer");
     } catch {
       logout();
     } finally {

@@ -198,6 +198,7 @@ Suggested map:
 - `niyantran` -> `niyantran.blackholeinfiverse.com`
 - `gurukul` -> `gurukul.blackholeinfiverse.com`
 - `mitra` -> `mitra.blackholeinfiverse.com`
+- `vajra` -> `vajra.blackholeinfiverse.com`
 - `app06` -> `app06.blackholeinfiverse.com`
 - `app07` -> `app07.blackholeinfiverse.com`
 - `app08` -> `app08.blackholeinfiverse.com`

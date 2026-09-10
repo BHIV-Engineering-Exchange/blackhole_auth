@@ -45,9 +45,39 @@ app.use(
   })
 );
 
+const jwt = require("jsonwebtoken");
+
 app.use(optionalAuth({ jwtSecret }));
 
 app.get("/api/health", (req, res) => res.status(200).json({ status: "ok" }));
+
+app.post("/api/login", (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "Email is required" });
+
+  const user = {
+    user_id: "dev_user_1",
+    email,
+    roles: ["admin"],
+    allowedApps: ["setu", "sampada", "niyantran", "gurukul", "mitra", "vajra"]
+  };
+
+  const token = jwt.sign(user, jwtSecret, { expiresIn: "8h" });
+
+  res.cookie("blackhole_token", token, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    path: "/"
+  });
+
+  return res.json({ success: true, user });
+});
+
+app.post("/api/logout", (req, res) => {
+  res.clearCookie("blackhole_token", { path: "/" });
+  return res.json({ success: true });
+});
 
 app.get(
   "/api/me",
