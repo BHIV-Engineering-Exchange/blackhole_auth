@@ -1,0 +1,50 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: blackhole_auth_backend_local
+    ports:
+      # App runs on 8080 internally; mapped to 8087 on the host to avoid VM port conflicts
+      - "8087:8080"
+    env_file:
+      - ./backend/.env
+    networks:
+      - blackhole_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=http://localhost:8080
+        - VITE_AUTH_SERVER_URL=http://localhost:8080
+    container_name: blackhole_auth_frontend_local
+    ports:
+      # App runs on 5173 internally; mapped to 5180 on the host to avoid VM port conflicts
+      - "5180:5173"
+    env_file:
+      - ./frontend/.env
+    networks:
+      - blackhole_network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+networks:
+  blackhole_network:
+    driver: bridge
