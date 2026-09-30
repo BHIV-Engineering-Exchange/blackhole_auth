@@ -4,7 +4,8 @@ export const ALL_APPS = [
   { key: "niyantran", name: "Niyantran", url: "https://niyantran.blackholeinfiverse.com", description: "Governance and control center" },
   { key: "gurukul", name: "Gurukul", url: "https://gurukul.blackholeinfiverse.com", description: "Learning and talent platform" },
   { key: "mitra", name: "Mitra", url: "https://mitra.blackholeinfiverse.com", description: "Engagement and support app" },
-  { key: "vajra", name: "Vajra", url: "https://vajra.blackholeinfiverse.com", description: "Blockchain, wallet, & AI fraud detection" }
+  { key: "vajra", name: "Vajra", url: "https://vajra.blackholeinfiverse.com", description: "Blockchain, wallet, & AI fraud detection" },
+  { key: "gov-ops", name: "Gov Operations", url: "http://localhost:5173", description: "Government operations portal" }
 ];
 
 
