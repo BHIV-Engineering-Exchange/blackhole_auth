@@ -60,7 +60,7 @@ PORT=8080
 NODE_ENV=development
 JWT_SECRET=<must-match-bhiv-auth-server>
 AUTH_SERVER_URL=https://bhiv-auth.onrender.com
-CORS_ORIGINS=http://localhost:5173,https://products.blackholeinfiverse.com,https://*.blackholeinfiverse.com
+CORS_ORIGINS=https://namankan.blackholeinfiverse.com,http://163.128.209.18:5181,http://localhost:5173,https://products.blackholeinfiverse.com,https://*.blackholeinfiverse.com
 ```
 
 ### `frontend/.env`

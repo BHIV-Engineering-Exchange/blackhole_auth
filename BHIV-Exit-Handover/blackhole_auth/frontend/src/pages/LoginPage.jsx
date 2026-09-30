@@ -1,32 +1,31 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const LoginPage = () => {
-  const { authServerUrl } = useAuth();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
-  const [showOverlay, setShowOverlay] = useState(false);
-  const iframeRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const openBlackholeAuth = useCallback(
-    (e) => {
+  const handleLogin = useCallback(
+    async (e) => {
       e.preventDefault();
       if (!email) return;
-      const src =
-        authServerUrl +
-        "/login?mode=popup&email=" +
-        encodeURIComponent(email) +
-        "&redirect=" +
-        encodeURIComponent(window.location.origin);
-      if (iframeRef.current) iframeRef.current.src = src;
-      setShowOverlay(true);
+      setLoading(true);
+      setError("");
+      try {
+        await login(email);
+        navigate("/dashboard");
+      } catch (err) {
+        setError(err.response?.data?.error || "Login failed. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     },
-    [email, authServerUrl]
+    [email, login, navigate]
   );
-
-  const closeOverlay = useCallback(() => {
-    setShowOverlay(false);
-    if (iframeRef.current) iframeRef.current.src = "";
-  }, []);
 
   return (
     <main className="auth-shell">
@@ -34,33 +33,24 @@ const LoginPage = () => {
         <h1>BHIV Core</h1>
         <p>Sign in with your Blackhole account to access your products.</p>
 
-        <form onSubmit={openBlackholeAuth}>
+        {error && <p className="error-text">{error}</p>}
+
+        <form onSubmit={handleLogin}>
           <label>
             Email
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              placeholder="Enter your email (e.g. user@example.com)"
               required
             />
           </label>
-          <button type="submit" className="bh-login-btn">
-            Continue with Blackhole
+          <button type="submit" className="bh-login-btn" disabled={loading}>
+            {loading ? "Signing in..." : "Continue with Blackhole"}
           </button>
         </form>
       </section>
-
-      {showOverlay && (
-        <div className="bh-overlay" onClick={closeOverlay}>
-          <div className="bh-popup" onClick={(e) => e.stopPropagation()}>
-            <iframe ref={iframeRef} title="Blackhole Auth" className="bh-iframe" />
-            <button className="bh-close" onClick={closeOverlay} type="button">
-              &times;
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 };

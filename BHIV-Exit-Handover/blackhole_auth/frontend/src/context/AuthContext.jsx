@@ -19,10 +19,25 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const logout = useCallback(() => {
+  const login = useCallback(async (email) => {
+    try {
+      const { data } = await client.post("/api/login", { email });
+      if (data.user) {
+        setUser(data.user);
+        return data.user;
+      }
+    } catch (err) {
+      throw err;
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      await client.post("/api/logout");
+    } catch {
+      // ignore
+    }
     setUser(null);
-    const redirect = encodeURIComponent(window.location.origin);
-    window.location.href = `${AUTH_SERVER}/logout?redirect=${redirect}`;
   }, []);
 
   useEffect(() => {
@@ -54,8 +69,8 @@ export const AuthProvider = ({ children }) => {
   }, [fetchMe]);
 
   const value = useMemo(
-    () => ({ user, isBootstrapping, fetchMe, logout, authServerUrl: AUTH_SERVER }),
-    [user, isBootstrapping, fetchMe, logout]
+    () => ({ user, isBootstrapping, fetchMe, login, logout, authServerUrl: AUTH_SERVER }),
+    [user, isBootstrapping, fetchMe, login, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

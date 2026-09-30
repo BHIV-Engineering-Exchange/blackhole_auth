@@ -29,8 +29,10 @@ function requireAuth(options = {}) {
       req.user = {
         user_id: decoded.user_id,
         email: decoded.email,
-        roles: decoded.roles,
-        allowedApps: decoded.allowedApps
+        tenant_id: decoded.tenant_id || "tenant_default",
+        roles: decoded.roles || [],
+        permissions: decoded.permissions || [],
+        allowedApps: decoded.allowedApps || []
       };
       next();
     } catch {
@@ -57,8 +59,10 @@ function optionalAuth(options = {}) {
       req.user = {
         user_id: decoded.user_id,
         email: decoded.email,
-        roles: decoded.roles,
-        allowedApps: decoded.allowedApps
+        tenant_id: decoded.tenant_id || "tenant_default",
+        roles: decoded.roles || [],
+        permissions: decoded.permissions || [],
+        allowedApps: decoded.allowedApps || []
       };
     } catch {
       req.user = null;
