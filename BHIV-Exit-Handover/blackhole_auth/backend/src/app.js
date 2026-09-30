@@ -50,9 +50,9 @@ const jwt = require("jsonwebtoken");
 
 app.use(optionalAuth({ jwtSecret }));
 
-app.get("/api/health", (req, res) => res.status(200).json({ status: "ok" }));
+app.get(["/api/health", "/health"], (req, res) => res.status(200).json({ status: "ok" }));
 
-app.post("/api/login", (req, res) => {
+app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: "Email is required" });
 
@@ -77,20 +77,20 @@ app.post("/api/login", (req, res) => {
   return res.json({ success: true, user });
 });
 
-app.post(["/api/logout", "/api/auth/logout"], (req, res) => {
+app.post(["/api/logout", "/api/auth/logout", "/logout", "/auth/logout"], (req, res) => {
   res.clearCookie("blackhole_token", { path: "/" });
   return res.json({ success: true });
 });
 
 app.get(
-  ["/api/me", "/api/auth/me"],
+  ["/api/me", "/api/auth/me", "/me", "/auth/me"],
   requireAuth({ jwtSecret, authServerUrl }),
   (req, res) => {
     res.json({ user: req.user });
   }
 );
 
-app.get("/api/auth/sso/session", (req, res) => {
+app.get(["/api/auth/sso/session", "/api/sso/session", "/auth/sso/session", "/sso/session"], (req, res) => {
   if (!req.user) {
     return res.status(401).json({ authenticated: false, error: "Not authenticated" });
   }
@@ -104,6 +104,7 @@ app.get("/api/auth/sso/session", (req, res) => {
   }
   return res.json({ authenticated: true, user: req.user });
 });
+
 
 
 app.use(notFound);
