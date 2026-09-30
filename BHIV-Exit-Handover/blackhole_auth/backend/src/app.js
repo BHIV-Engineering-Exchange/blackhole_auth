@@ -15,11 +15,12 @@ app.use(cookieParser());
 
 const originAllowed = (origin) => {
   if (!origin || corsOrigins.length === 0) return true;
+  const cleanOrigin = origin.trim().replace(/\/+$/, "");
   return corsOrigins.some((allowed) => {
-    if (allowed === origin) return true;
+    if (allowed === cleanOrigin || allowed === "*") return true;
     if (allowed.includes("*")) {
       const regexPattern = `^${allowed.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")}$`;
-      return new RegExp(regexPattern).test(origin);
+      return new RegExp(regexPattern).test(cleanOrigin);
     }
     return false;
   });
@@ -45,17 +46,65 @@ app.use(
   })
 );
 
+const jwt = require("jsonwebtoken");
+
 app.use(optionalAuth({ jwtSecret }));
 
 app.get("/api/health", (req, res) => res.status(200).json({ status: "ok" }));
 
+app.post("/api/login", (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "Email is required" });
+
+  const user = {
+    user_id: "dev_user_1",
+    email,
+    tenant_id: "tenant_default",
+    roles: ["admin"],
+    permissions: ["admin", "read", "write"],
+    allowedApps: ["setu", "sampada", "niyantran", "gurukul", "mitra", "gov-ops", "gov_ops", "vajra"]
+  };
+
+  const token = jwt.sign(user, jwtSecret, { expiresIn: "8h" });
+
+  res.cookie("blackhole_token", token, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    path: "/"
+  });
+
+  return res.json({ success: true, user });
+});
+
+app.post(["/api/logout", "/api/auth/logout"], (req, res) => {
+  res.clearCookie("blackhole_token", { path: "/" });
+  return res.json({ success: true });
+});
+
 app.get(
-  "/api/me",
+  ["/api/me", "/api/auth/me"],
   requireAuth({ jwtSecret, authServerUrl }),
   (req, res) => {
     res.json({ user: req.user });
   }
 );
+
+app.get("/api/auth/sso/session", (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ authenticated: false, error: "Not authenticated" });
+  }
+  const appSlug = (req.query.app || "").toString().toLowerCase();
+  if (
+    appSlug &&
+    req.user.allowedApps &&
+    !req.user.allowedApps.some((a) => a.toLowerCase() === appSlug)
+  ) {
+    return res.status(403).json({ authenticated: false, error: "Access denied" });
+  }
+  return res.json({ authenticated: true, user: req.user });
+});
+
 
 app.use(notFound);
 app.use(errorHandler);

@@ -16,6 +16,6 @@ module.exports = {
   authServerUrl: process.env.AUTH_SERVER_URL || "https://bhiv-auth.onrender.com",
   corsOrigins: (process.env.CORS_ORIGINS || "")
     .split(",")
-    .map((origin) => origin.trim())
+    .map((origin) => origin.trim().replace(/\/+$/, ""))
     .filter(Boolean)
 };
