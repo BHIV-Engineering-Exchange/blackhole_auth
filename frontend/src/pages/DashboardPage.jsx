@@ -20,20 +20,49 @@ const DashboardPage = () => {
   const isAdmin = user?.roles?.includes("admin");
 
   const launchApp = async (app) => {
+    console.log("🚀 launchApp called for:", app);
+    console.log("Current user:", user);
     setError("");
+
+    const isAllowed = (user?.allowedApps || []).some(
+      (a) => a.toLowerCase() === app.key.toLowerCase()
+    );
+
+    if (!isAllowed) {
+      console.warn("⛔ Access denied by local check. allowedApps:", user?.allowedApps);
+      setError(`Access denied: ${app.name} is not in your allowed app list.`);
+      return;
+    }
+
+    console.log("Opening new tab for target URL:", app.url);
+    const newWindow = window.open("about:blank", "_blank");
     setLaunchingKey(app.key);
     try {
+      console.log("Fetching latest user session (fetchMe)...");
       const sessionUser = await fetchMe();
-      if (!sessionUser) {
-        logout();
+      console.log("Session user received:", sessionUser);
+
+      const serverIsAllowed = (sessionUser?.allowedApps || []).some(
+        (a) => a.toLowerCase() === app.key.toLowerCase()
+      );
+
+      if (!sessionUser || !serverIsAllowed) {
+        console.warn("⛔ Access denied by server check. sessionUser:", sessionUser);
+        if (newWindow) newWindow.close();
+        if (!sessionUser) logout();
+        else setError(`Access denied: ${app.name} is not in your allowed app list.`);
         return;
       }
-      if (!sessionUser.allowedApps?.includes(app.key)) {
-        setError(`Access denied: ${app.name} is not in your allowed app list.`);
-        return;
+
+      console.log("✅ Navigating window to:", app.url);
+      if (newWindow) {
+        newWindow.location.href = app.url;
+      } else {
+        window.location.href = app.url;
       }
-      window.open(app.url, "_blank", "noopener,noreferrer");
-    } catch {
+    } catch (err) {
+      console.error("❌ Error launching app:", err);
+      if (newWindow) newWindow.close();
       logout();
     } finally {
       setLaunchingKey("");
