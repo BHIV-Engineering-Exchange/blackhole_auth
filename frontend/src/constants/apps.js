@@ -5,7 +5,7 @@ export const ALL_APPS = [
   { key: "gurukul", name: "Gurukul", url: "https://gurukul.blackholeinfiverse.com", description: "Learning and talent platform" },
   { key: "mitra", name: "Mitra", url: "https://mitra.blackholeinfiverse.com", description: "Engagement and support app" },
   { key: "vajra", name: "Vajra", url: "https://vajra.blackholeinfiverse.com", description: "Blockchain, wallet, & AI fraud detection" },
-  { key: "gov-ops", name: "Gov Operations", url: import.meta.env.VITE_GOV_OPS_URL || (import.meta.env.DEV ? "http://localhost:5174" : "https://namankan.blackholeinfiverse.com"), description: "Government operations portal" }
+  { key: "gov-ops", name: "Gov Operations", url: "https://namankan.blackholeinfiverse.com", description: "Government operations portal" }
 ];
 
 
