@@ -13,13 +13,24 @@ app.use(helmet());
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
+const defaultAllowedOrigins = [
+  "https://namankan.blackholeinfiverse.com",
+  "https://pravesh.blackholeinfiverse.com",
+  "https://products.blackholeinfiverse.com",
+  "https://*.blackholeinfiverse.com",
+  "http://163.128.209.18:*",
+  "http://localhost:*"
+];
+
+const allCorsOrigins = Array.from(new Set([...corsOrigins, ...defaultAllowedOrigins]));
+
 const originAllowed = (origin) => {
-  if (!origin || corsOrigins.length === 0) return true;
+  if (!origin) return true;
   const cleanOrigin = origin.trim().replace(/\/+$/, "");
-  return corsOrigins.some((allowed) => {
+  return allCorsOrigins.some((allowed) => {
     if (allowed === cleanOrigin || allowed === "*") return true;
     if (allowed.includes("*")) {
-      const regexPattern = `^${allowed.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")}$`;
+      const regexPattern = `^${allowed.replace(/[\^$.+?()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")}$`;
       return new RegExp(regexPattern).test(cleanOrigin);
     }
     return false;
@@ -32,7 +43,7 @@ app.use(
       if (originAllowed(origin)) {
         return callback(null, true);
       }
-      return callback(new Error("Origin not allowed by CORS"), false);
+      return callback(null, false);
     },
     credentials: true
   })
