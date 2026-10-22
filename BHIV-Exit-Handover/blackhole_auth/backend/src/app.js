@@ -72,8 +72,30 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], (req, res) 
     email,
     tenant_id: "tenant_default",
     roles: ["admin"],
-    permissions: ["admin", "read", "write"],
-    allowedApps: ["setu", "sampada", "niyantran", "gurukul", "mitra", "gov-ops", "gov_ops", "vajra"]
+    permissions: [
+      "all",
+      "admin",
+      "read",
+      "write",
+      "intelligence:view",
+      "intelligence:read",
+      "intelligence:write",
+      "intelligence:admin",
+      "intelligence:*"
+    ],
+    allowedApps: [
+      "setu",
+      "sampada",
+      "niyantran",
+      "gurukul",
+      "mitra",
+      "vajra",
+      "gov-ops",
+      "gov_ops",
+      "district-intelligence",
+      "district_intelligence",
+      "intelligence"
+    ]
   };
 
   const token = jwt.sign(user, jwtSecret, { expiresIn: "8h" });

@@ -71,8 +71,30 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], (req, res) 
     email,
     tenant_id: "tenant_default",
     roles: ["admin"],
-    permissions: ["all"],
-    allowedApps: ["setu", "sampada", "niyantran", "gurukul", "mitra", "vajra", "gov-ops"]
+    permissions: [
+      "all",
+      "admin",
+      "read",
+      "write",
+      "intelligence:view",
+      "intelligence:read",
+      "intelligence:write",
+      "intelligence:admin",
+      "intelligence:*"
+    ],
+    allowedApps: [
+      "setu",
+      "sampada",
+      "niyantran",
+      "gurukul",
+      "mitra",
+      "vajra",
+      "gov-ops",
+      "gov_ops",
+      "district-intelligence",
+      "district_intelligence",
+      "intelligence"
+    ]
   };
 
   const token = jwt.sign(user, jwtSecret, { expiresIn: "8h" });
@@ -106,7 +128,11 @@ app.get(["/api/auth/sso/session", "/api/sso/session", "/auth/sso/session", "/sso
   }
 
   const targetApp = req.query.app;
-  if (targetApp && Array.isArray(req.user.allowedApps) && !req.user.allowedApps.includes(targetApp)) {
+  if (
+    targetApp &&
+    Array.isArray(req.user.allowedApps) &&
+    !req.user.allowedApps.some((a) => a.toLowerCase() === targetApp.toLowerCase())
+  ) {
     return res.status(403).json({ authenticated: true, error: "Access denied to requested application" });
   }
 
