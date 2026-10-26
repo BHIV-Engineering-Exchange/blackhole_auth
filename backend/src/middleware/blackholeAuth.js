@@ -28,7 +28,12 @@ function requireAuth(options = {}) {
       const decoded = jwt.verify(token, jwtSecret);
       req.user = {
         user_id: decoded.user_id,
+        candidate_id: decoded.candidate_id || null,
         email: decoded.email,
+        email_verified: decoded.email_verified ?? true,
+        institute_code: decoded.institute_code || null,
+        cohort_id: decoded.cohort_id || null,
+        lifecycle_status: decoded.lifecycle_status || "ACTIVE",
         tenant_id: decoded.tenant_id || "tenant_default",
         roles: decoded.roles || [],
         permissions: decoded.permissions || [],
@@ -58,7 +63,12 @@ function optionalAuth(options = {}) {
       const decoded = jwt.verify(token, jwtSecret);
       req.user = {
         user_id: decoded.user_id,
+        candidate_id: decoded.candidate_id || null,
         email: decoded.email,
+        email_verified: decoded.email_verified ?? true,
+        institute_code: decoded.institute_code || null,
+        cohort_id: decoded.cohort_id || null,
+        lifecycle_status: decoded.lifecycle_status || "ACTIVE",
         tenant_id: decoded.tenant_id || "tenant_default",
         roles: decoded.roles || [],
         permissions: decoded.permissions || [],
