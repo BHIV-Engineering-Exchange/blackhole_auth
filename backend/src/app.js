@@ -203,6 +203,37 @@ app.get(["/api/auth/sso/session", "/api/sso/session", "/auth/sso/session", "/sso
     return res.status(401).json({ authenticated: false, error: "Not authenticated" });
   }
 
+  const isCandidate = Array.isArray(req.user.roles) && req.user.roles.includes("candidate");
+
+  // Trust boundary: Candidate sessions require verified institute and active lifecycle status
+  if (isCandidate) {
+    if (!req.user.institute_code || !APPROVED_INSTITUTES.includes(req.user.institute_code)) {
+      return res.status(403).json({
+        authenticated: true,
+        error: `Access denied: Candidate has no valid approved institute_code assigned (Allowed: ${APPROVED_INSTITUTES.join(", ")})`,
+        institute_code: req.user.institute_code || null
+      });
+    }
+
+    const validActiveStatuses = ["ENROLLED_ACTIVE", "ACTIVE"];
+    const currentStatus = (req.user.lifecycle_status || "").toUpperCase();
+    if (!validActiveStatuses.includes(currentStatus)) {
+      return res.status(403).json({
+        authenticated: true,
+        error: `Access denied: Candidate lifecycle status '${req.user.lifecycle_status}' does not allow application access`,
+        lifecycle_status: req.user.lifecycle_status
+      });
+    }
+
+    if (!req.user.candidate_id) {
+      return res.status(403).json({
+        authenticated: true,
+        error: "Access denied: Missing canonical candidate_id from Sampada registry",
+        candidate_id: null
+      });
+    }
+  }
+
   const targetApp = req.query.app;
   if (
     targetApp &&
