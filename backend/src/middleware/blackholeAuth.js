@@ -2,10 +2,27 @@ const jwt = require("jsonwebtoken");
 
 const COOKIE_NAME = "blackhole_token";
 
+const toUser = (decoded) => ({
+  user_id: decoded.user_id,
+  candidate_id: decoded.candidate_id || null,
+  email: decoded.email,
+  email_verified: decoded.email_verified ?? true,
+  institute_code: decoded.institute_code || null,
+  campus: decoded.campus || (decoded.institute_code === "MSSU" ? "KHARGHAR" : "MAIN"),
+  cohort_id: decoded.cohort_id || null,
+  lifecycle_status: decoded.lifecycle_status || "ACTIVE",
+  tenant_id: decoded.tenant_id || "tenant_default",
+  roles: decoded.roles || [],
+  permissions: decoded.permissions || [],
+  allowedApps: decoded.allowedApps || [],
+  isGuest: Boolean(decoded.isGuest)
+});
+
 function requireAuth(options = {}) {
   const jwtSecret = options.jwtSecret || process.env.JWT_SECRET;
   const cookieName = options.cookieName || COOKIE_NAME;
   const authServerUrl = options.authServerUrl || process.env.AUTH_SERVER_URL;
+  const allowGuest = Boolean(options.allowGuest);
 
   if (!jwtSecret) throw new Error("JWT_SECRET is required");
 
@@ -26,26 +43,23 @@ function requireAuth(options = {}) {
     }
     try {
       const decoded = jwt.verify(token, jwtSecret);
-      req.user = {
-        user_id: decoded.user_id,
-        candidate_id: decoded.candidate_id || null,
-        email: decoded.email,
-        email_verified: decoded.email_verified ?? true,
-        institute_code: decoded.institute_code || null,
-        campus: decoded.campus || (decoded.institute_code === "MSSU" ? "KHARGHAR" : "MAIN"),
-        cohort_id: decoded.cohort_id || null,
-        lifecycle_status: decoded.lifecycle_status || "ACTIVE",
-        tenant_id: decoded.tenant_id || "tenant_default",
-        roles: decoded.roles || [],
-        permissions: decoded.permissions || [],
-        allowedApps: decoded.allowedApps || []
-      };
+      req.user = toUser(decoded);
+      if (req.user.isGuest && !allowGuest) {
+        return res
+          .status(403)
+          .json({ error: "Sign in to continue", code: "signin_required" });
+      }
       next();
     } catch {
       res.clearCookie(cookieName, { path: "/" });
       return res.status(401).json({ error: "Invalid token" });
     }
   };
+}
+
+// Real (non-guest) sessions only — guests get 403 signin_required.
+function requireUser(options = {}) {
+  return requireAuth({ ...options, allowGuest: false });
 }
 
 function optionalAuth(options = {}) {
@@ -62,20 +76,7 @@ function optionalAuth(options = {}) {
     }
     try {
       const decoded = jwt.verify(token, jwtSecret);
-      req.user = {
-        user_id: decoded.user_id,
-        candidate_id: decoded.candidate_id || null,
-        email: decoded.email,
-        email_verified: decoded.email_verified ?? true,
-        institute_code: decoded.institute_code || null,
-        campus: decoded.campus || (decoded.institute_code === "MSSU" ? "KHARGHAR" : "MAIN"),
-        cohort_id: decoded.cohort_id || null,
-        lifecycle_status: decoded.lifecycle_status || "ACTIVE",
-        tenant_id: decoded.tenant_id || "tenant_default",
-        roles: decoded.roles || [],
-        permissions: decoded.permissions || [],
-        allowedApps: decoded.allowedApps || []
-      };
+      req.user = toUser(decoded);
     } catch {
       req.user = null;
     }
@@ -92,4 +93,4 @@ function requireApp(appName) {
   };
 }
 
-module.exports = { requireAuth, optionalAuth, requireApp };
+module.exports = { requireAuth, requireUser, optionalAuth, requireApp };

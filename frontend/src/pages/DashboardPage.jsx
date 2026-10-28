@@ -62,6 +62,11 @@ const DashboardPage = () => {
         return;
       }
 
+      // Make sure a session cookie exists for the product to pick up: a real
+      // one if signed in, a guest one otherwise — so the product never boots
+      // into its own sign-in page.
+      await client.get("/api/sso/guest").catch(() => {});
+
       const opened = window.open(app.url, "_blank");
       if (!opened) {
         // Popup blocked — open the product in this tab instead of doing nothing.

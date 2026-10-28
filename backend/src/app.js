@@ -6,7 +6,7 @@ const rateLimit = require("express-rate-limit");
 const { corsOrigins, jwtSecret, authServerUrl, cookieDomain, cookieSecure } = require("./config/env");
 const { requireAuth, optionalAuth } = require("./middleware/blackholeAuth");
 const { errorHandler, notFound } = require("./middleware/errorHandler");
-const { listApps } = require("./store/appRegistry");
+const { listApps, appKeys, isKnownApp } = require("./store/appRegistry");
 
 const APPROVED_INSTITUTES = ["MSSU", "DYP-A", "SIT-S", "SIPS-S", "VJTI"];
 
@@ -87,8 +87,20 @@ app.use(
 );
 
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 app.use(optionalAuth({ jwtSecret }));
+
+// COOKIE_DOMAIN (e.g. .blackholeinfiverse.com) lets the same cookie reach
+// product subdomains in production; locally it stays host-only on localhost,
+// which already covers every port.
+const cookieOptions = () => ({
+  httpOnly: true,
+  secure: cookieSecure,
+  sameSite: "lax",
+  path: "/",
+  ...(cookieDomain ? { domain: cookieDomain } : {})
+});
 
 app.get(["/api/health", "/health"], (req, res) => res.status(200).json({ status: "ok" }));
 
@@ -351,17 +363,90 @@ app.post(["/api/auth/logout", "/api/logout", "/logout", "/auth/logout"], (req, r
   return res.json({ success: true });
 });
 
+// Guest (demo) session: issued to anyone who opens a product without signing
+// in. Guests get read-only access; products reject their mutations with
+// 403 signin_required and prompt for sign-in only when an action needs it.
+const guestIdentity = () => ({
+  user_id: `guest_${crypto.randomBytes(6).toString("hex")}`,
+  email: null,
+  tenant_id: "tenant_default",
+  roles: [],
+  permissions: [],
+  allowedApps: appKeys(),
+  isGuest: true
+});
+
+const issueGuestSession = (res, existingClaims = null) => {
+  const claims = existingClaims || guestIdentity();
+  const token = jwt.sign(claims, jwtSecret, { expiresIn: "24h" });
+  res.cookie("blackhole_token", token, cookieOptions());
+  return claims;
+};
+
 app.get(
   ["/api/me", "/api/auth/me", "/me", "/auth/me"],
-  requireAuth({ jwtSecret, authServerUrl }),
+  requireAuth({ jwtSecret, authServerUrl, allowGuest: true }),
   (req, res) => {
     res.json({ user: req.user });
   }
 );
 
+// Products call this before their own session check. No cookie yet, or only a
+// guest cookie? Mint/refresh a guest session so the product boots straight
+// into its read-only view instead of a sign-in page. A real session passes
+// through untouched.
+app.get(
+  ["/api/sso/guest", "/api/auth/sso/guest", "/auth/sso/guest", "/sso/guest"],
+  (req, res) => {
+    if (req.user && !req.user.isGuest) {
+      return res.json({ success: true, guest: false, user: req.user });
+    }
+    const claims = issueGuestSession(res, req.user || null);
+    return res.json({
+      success: true,
+      guest: true,
+      user: {
+        user_id: claims.user_id,
+        email: null,
+        tenant_id: claims.tenant_id,
+        roles: [],
+        permissions: [],
+        allowedApps: claims.allowedApps,
+        isGuest: true
+      }
+    });
+  }
+);
+
 app.get(["/api/auth/sso/session", "/api/sso/session", "/auth/sso/session", "/sso/session"], (req, res) => {
-  if (!req.user) {
+  const targetApp = req.query.app;
+  if (targetApp && !isKnownApp(targetApp)) {
+    return res.status(403).json({ authenticated: false, error: "Access denied to requested application" });
+  }
+
+  // strict=1 keeps the old contract (401 when not signed in) for products
+  // that genuinely require a real account on entry.
+  if (!req.user && req.query.strict === "1") {
     return res.status(401).json({ authenticated: false, error: "Not authenticated" });
+  }
+
+  // No real session, or only a guest one: mint/refresh a guest cookie so the
+  // product boots straight into its read-only view instead of a sign-in page.
+  if (!req.user || req.user.isGuest) {
+    const claims = issueGuestSession(res, req.user || null);
+    return res.json({
+      authenticated: true,
+      guest: true,
+      user: req.user || {
+        user_id: claims.user_id,
+        email: null,
+        tenant_id: claims.tenant_id,
+        roles: [],
+        permissions: [],
+        allowedApps: claims.allowedApps,
+        isGuest: true
+      }
+    });
   }
 
   const isCandidate = Array.isArray(req.user.roles) && req.user.roles.includes("candidate");
@@ -395,7 +480,6 @@ app.get(["/api/auth/sso/session", "/api/sso/session", "/auth/sso/session", "/sso
     }
   }
 
-  const targetApp = req.query.app;
   if (
     targetApp &&
     Array.isArray(req.user.allowedApps) &&
@@ -418,7 +502,7 @@ app.get(["/api/auth/sso/session", "/api/sso/session", "/auth/sso/session", "/sso
     });
   }
 
-  return res.json({ authenticated: true, user: req.user });
+  return res.json({ authenticated: true, guest: false, user: req.user });
 });
 
 app.use(notFound);

@@ -16,7 +16,7 @@ module.exports = {
   jwtSecret: process.env.JWT_SECRET,
   authServerUrl: process.env.AUTH_SERVER_URL || "https://bhiv-auth.onrender.com",
   cookieDomain: process.env.COOKIE_DOMAIN || (process.env.NODE_ENV === "production" ? ".blackholeinfiverse.com" : undefined),
-  cookieSecure: process.env.COOKIE_SECURE === "true" || process.env.NODE_ENV === "production",
+  cookieSecure: /^(1|true|yes)$/i.test(process.env.COOKIE_SECURE || "") || process.env.NODE_ENV === "production",
   corsOrigins: (process.env.CORS_ORIGINS || "")
     .split(",")
     .map((origin) => origin.trim())
