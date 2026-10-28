@@ -1,0 +1,62 @@
+{
+  "apps": [
+    {
+      "key": "setu",
+      "name": "Setu",
+      "description": "Workflow orchestration platform",
+      "url": "https://setu.blackholeinfiverse.com",
+      "devUrl": "http://localhost:3001"
+    },
+    {
+      "key": "sampada",
+      "name": "Sampada",
+      "description": "Finance and assets suite",
+      "url": "https://sampada.blackholeinfiverse.com",
+      "devUrl": "http://localhost:5175/"
+    },
+    {
+      "key": "hackaverse",
+      "name": "HackaVerse",
+      "description": "Hackathon management platform",
+      "url": "https://hackaverse.blackholeinfiverse.com/app",
+      "devUrl": "http://localhost:3000/app?sso=pravesh"
+    },
+    {
+      "key": "niyantran",
+      "name": "Niyantran",
+      "description": "Governance and control center",
+      "url": "https://niyantran.blackholeinfiverse.com"
+    },
+    {
+      "key": "gurukul",
+      "name": "Gurukul",
+      "description": "Learning access, courses, and assessments",
+      "url": "https://gurukul.blackholeinfiverse.com",
+      "devUrl": "http://localhost:5173"
+    },
+    {
+      "key": "mitra",
+      "name": "Mitra",
+      "description": "Engagement and support app",
+      "url": "https://mitra.blackholeinfiverse.com"
+    },
+    {
+      "key": "vajra",
+      "name": "Vajra",
+      "description": "Blockchain, wallet, & AI fraud detection",
+      "url": "https://vajra.blackholeinfiverse.com"
+    },
+    {
+      "key": "gov-ops",
+      "name": "Gov Operations",
+      "description": "Government operations portal",
+      "url": "https://namankan.blackholeinfiverse.com"
+    },
+    {
+      "key": "district-intelligence",
+      "name": "District Intelligence",
+      "description": "Source-aware agricultural evidence and intelligence",
+      "url": "https://namankan.blackholeinfiverse.com/tenant/tenant_default/district-intelligence"
+    }
+  ]
+}

@@ -1,75 +1,81 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppCard from "../components/AppCard";
 import Spinner from "../components/Spinner";
-import { ALL_APPS } from "../constants/apps";
+import client from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
 const DashboardPage = () => {
   const { user, logout, fetchMe } = useAuth();
+  const [apps, setApps] = useState(null);
+  const [appsError, setAppsError] = useState("");
   const [launchingKey, setLaunchingKey] = useState("");
   const [error, setError] = useState("");
 
+  // Product list comes from the backend registry (backend/data/apps.json), so
+  // a new product shows up here without touching this file.
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await client.get("/api/apps");
+        if (mounted) setApps(Array.isArray(data?.apps) ? data.apps : []);
+      } catch (err) {
+        if (mounted) {
+          setAppsError(err.response?.data?.error || "Could not load the product list.");
+          setApps([]);
+        }
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Gate 2: only products present in the session's allowedApps are shown.
   const allowedSet = useMemo(
     () => new Set((user?.allowedApps || []).map((v) => v.toLowerCase())),
     [user]
   );
   const visibleApps = useMemo(
-    () => ALL_APPS.filter((app) => allowedSet.has(app.key)),
-    [allowedSet]
+    () => (apps || []).filter((app) => allowedSet.has(String(app.key).toLowerCase())),
+    [apps, allowedSet]
   );
   const isAdmin = user?.roles?.includes("admin");
 
   const launchApp = async (app) => {
-    console.log("🚀 launchApp called for:", app);
-    console.log("Current user:", user);
     setError("");
-
-    const isAllowed = (user?.allowedApps || []).some(
-      (a) => a.toLowerCase() === app.key.toLowerCase()
-    );
-
-    if (!isAllowed) {
-      console.warn("⛔ Access denied by local check. allowedApps:", user?.allowedApps);
-      setError(`Access denied: ${app.name} is not in your allowed app list.`);
-      return;
-    }
-
-    console.log("Opening new tab for target URL:", app.url);
-    const newWindow = window.open("about:blank", "_blank");
     setLaunchingKey(app.key);
     try {
-      console.log("Fetching latest user session (fetchMe)...");
+      // Re-check the session right before navigating; the server remains the
+      // authority on which products this account may open.
       const sessionUser = await fetchMe();
-      console.log("Session user received:", sessionUser);
-
-      const serverIsAllowed = (sessionUser?.allowedApps || []).some(
-        (a) => a.toLowerCase() === app.key.toLowerCase()
-      );
-
-      if (!sessionUser || !serverIsAllowed) {
-        console.warn("⛔ Access denied by server check. sessionUser:", sessionUser);
-        if (newWindow) newWindow.close();
-        if (!sessionUser) logout();
-        else setError(`Access denied: ${app.name} is not in your allowed app list.`);
+      if (!sessionUser) {
+        logout();
         return;
       }
 
-      console.log("✅ Navigating window to:", app.url);
-      if (newWindow) {
-        newWindow.location.href = app.url;
-      } else {
+      const serverAllowed = (sessionUser.allowedApps || []).some(
+        (a) => String(a).toLowerCase() === String(app.key).toLowerCase()
+      );
+      if (!serverAllowed) {
+        setError(`Access denied: ${app.name} is not in your allowed app list.`);
+        return;
+      }
+
+      const opened = window.open(app.url, "_blank");
+      if (!opened) {
+        // Popup blocked — open the product in this tab instead of doing nothing.
         window.location.href = app.url;
       }
     } catch (err) {
-      console.error("❌ Error launching app:", err);
-      if (newWindow) newWindow.close();
+      console.error("Error launching app:", err);
       logout();
     } finally {
       setLaunchingKey("");
     }
   };
 
-  if (!user) return <Spinner label="Loading dashboard..." />;
+  if (!user || apps === null) return <Spinner label="Loading dashboard..." />;
 
   return (
     <main className="dashboard-shell">
@@ -90,6 +96,7 @@ const DashboardPage = () => {
       </header>
 
       {error ? <p className="error-text">{error}</p> : null}
+      {appsError ? <p className="error-text">{appsError}</p> : null}
 
       <section>
         <h2>Product Launcher</h2>
@@ -97,22 +104,18 @@ const DashboardPage = () => {
       </section>
 
       <section className="app-grid">
-        {visibleApps.map((app) => {
-          return (
-            <AppCard
-              key={app.key}
-              app={app}
-              onLaunch={launchApp}
-              disabled={launchingKey.length > 0}
-            />
-          );
-        })}
+        {visibleApps.map((app) => (
+          <AppCard
+            key={app.key}
+            app={app}
+            onLaunch={launchApp}
+            disabled={launchingKey.length > 0}
+          />
+        ))}
       </section>
 
-      {visibleApps.length === 0 ? (
-        <p className="empty-state">
-          No apps assigned to your account yet. Contact your administrator.
-        </p>
+      {visibleApps.length === 0 && !appsError ? (
+        <p className="empty-state">No products registered yet. Contact your administrator.</p>
       ) : null}
     </main>
   );

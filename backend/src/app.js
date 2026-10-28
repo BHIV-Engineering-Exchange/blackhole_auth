@@ -6,6 +6,7 @@ const rateLimit = require("express-rate-limit");
 const { corsOrigins, jwtSecret, authServerUrl, cookieDomain, cookieSecure } = require("./config/env");
 const { requireAuth, optionalAuth } = require("./middleware/blackholeAuth");
 const { errorHandler, notFound } = require("./middleware/errorHandler");
+const { listApps } = require("./store/appRegistry");
 
 const APPROVED_INSTITUTES = ["MSSU", "DYP-A", "SIT-S", "SIPS-S", "VJTI"];
 
@@ -90,6 +91,12 @@ const jwt = require("jsonwebtoken");
 app.use(optionalAuth({ jwtSecret }));
 
 app.get(["/api/health", "/health"], (req, res) => res.status(200).json({ status: "ok" }));
+
+// Product registry, served from backend/data/apps.json so the launcher never
+// carries its own copy of the product list.
+app.get(["/api/apps", "/api/auth/apps"], (req, res) => {
+  return res.json({ success: true, apps: listApps() });
+});
 
 // Official Frozen SSO & Candidate Contract Schema for Gate 2
 app.get(["/api/auth/contract", "/api/contract"], (req, res) => {
