@@ -164,6 +164,66 @@ async function runTests() {
     }
     console.log("✅ Passed: Logout successfully clears session cookie.");
 
+    // Test 8: Production Trust Boundary & Protection against caller-supplied claims
+    console.log("\n[TEST 8] Testing production trust boundary against caller-supplied identity claims...");
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = "production";
+
+    try {
+      // An untrusted caller tries to supply a forged candidate_id and admin role
+      const forgedRes = await request(
+        "POST",
+        "/api/login",
+        { "Content-Type": "application/json" },
+        {
+          email: "unregistered.stranger@external.com",
+          candidate_id: "FORGED-ID-9999",
+          roles: ["admin", "candidate"],
+          allowedApps: ["gurukul"]
+        }
+      );
+
+      const user = forgedRes.body.user;
+      if (user.candidate_id !== null) {
+        throw new Error(`Failed Test 8: Expected candidate_id to be stripped in production, but got: ${user.candidate_id}`);
+      }
+      if (user.roles.includes("candidate") || user.roles.includes("admin")) {
+        throw new Error(`Failed Test 8: Caller-supplied roles were not stripped in production: ${user.roles}`);
+      }
+      if (user.allowedApps.includes("gurukul")) {
+        throw new Error("Failed Test 8: Unenrolled user was granted candidate apps!");
+      }
+
+      console.log("✅ Passed: In production, caller-supplied candidate_id & roles are stripped.");
+      console.log("   - User candidate_id:", user.candidate_id, "(Correctly null)");
+      console.log("   - User roles:", user.roles, "(Correctly restricted to ['user'])");
+      console.log("   - User allowedApps:", user.allowedApps, "(Correctly empty)");
+
+      // Now verify that a verified candidate in Sampada registry receives authoritative claims
+      const verifiedRes = await request(
+        "POST",
+        "/api/login",
+        { "Content-Type": "application/json" },
+        {
+          email: "candidate.mssu@test.bhiv.com",
+          candidate_id: "ATTEMPTED_OVERRIDE_ID" // Attempted override
+        }
+      );
+
+      const verifiedUser = verifiedRes.body.user;
+      if (verifiedUser.candidate_id !== "BHIV-2026-MSSU-0085") {
+        throw new Error(`Failed Test 8: Expected authoritative Sampada ID BHIV-2026-MSSU-0085, but got: ${verifiedUser.candidate_id}`);
+      }
+      if (verifiedUser.institute_code !== "MSSU") {
+        throw new Error("Failed Test 8: Authoritative institute_code was not applied");
+      }
+      console.log("✅ Passed: Verified Sampada candidate receives authoritative claims regardless of caller input.");
+      console.log("   - Resolved candidate_id:", verifiedUser.candidate_id);
+      console.log("   - Resolved institute_code:", verifiedUser.institute_code);
+    } finally {
+      process.env.NODE_ENV = originalEnv;
+    }
+
     console.log("\n=================================================");
     console.log("   ALL PRAVESH -> GURUKUL SSO TESTS PASSED!     ");
     console.log("=================================================");

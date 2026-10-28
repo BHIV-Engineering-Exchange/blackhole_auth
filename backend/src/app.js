@@ -117,54 +117,116 @@ app.get(["/api/auth/contract", "/api/contract"], (req, res) => {
   });
 });
 
-app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], (req, res) => {
-  const {
-    email,
-    candidate_id,
-    institute_code,
-    cohort_id,
-    roles,
-    permissions,
-    allowedApps,
-    lifecycle_status,
-    tenant_id
-  } = req.body;
+const { resolveCanonicalCandidate, registerVerifiedCandidate } = require("./services/sampadaRegistryService");
 
+app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req, res) => {
+  const { email } = req.body;
   if (!email) return res.status(400).json({ error: "Email is required" });
 
-  let normInstitute = null;
-  if (institute_code) {
-    normInstitute = normalizeInstituteCode(institute_code);
-    if (!APPROVED_INSTITUTES.includes(normInstitute)) {
-      return res.status(400).json({
-        error: `Invalid institute_code '${institute_code}'. Allowed: ${APPROVED_INSTITUTES.join(", ")}`,
-        allowed_codes: APPROVED_INSTITUTES
-      });
+  const isProduction = process.env.NODE_ENV === "production";
+
+  // Authoritative Trust Boundary: Resolve candidate identity strictly against Sampada registry
+  const canonicalRecord = await resolveCanonicalCandidate(email);
+
+  let user;
+
+  if (isProduction) {
+    // In production, caller-supplied candidate_id, roles, and allowedApps are STRICTLY IGNORED!
+    if (canonicalRecord) {
+      user = {
+        user_id: `usr_${Buffer.from(email).toString("hex").slice(0, 10)}`,
+        candidate_id: canonicalRecord.candidate_id,
+        email,
+        email_verified: true,
+        institute_code: canonicalRecord.institute_code,
+        cohort_id: canonicalRecord.cohort_id || null,
+        tenant_id: "tenant_default",
+        roles: ["candidate"],
+        permissions: ["learning:read", "assessments:take", "tasks:read", "tasks:submit"],
+        allowedApps: canonicalRecord.allowedApps || [
+          "abhiruchi",
+          "sampada",
+          "hackaverse",
+          "niyantran",
+          "gurukul"
+        ],
+        lifecycle_status: canonicalRecord.lifecycle_status || "ENROLLED_ACTIVE"
+      };
+    } else {
+      // Unenrolled or general user - NEVER grant candidate_id or candidate apps from client input
+      user = {
+        user_id: `usr_${Buffer.from(email).toString("hex").slice(0, 10)}`,
+        candidate_id: null,
+        email,
+        email_verified: true,
+        institute_code: null,
+        cohort_id: null,
+        tenant_id: "tenant_default",
+        roles: ["user"],
+        permissions: ["general:read"],
+        allowedApps: [],
+        lifecycle_status: "UNENROLLED"
+      };
+    }
+  } else {
+    // Non-production / Test Harness Mode
+    if (canonicalRecord) {
+      user = {
+        user_id: req.body.user_id || `usr_${Buffer.from(email).toString("hex").slice(0, 10)}`,
+        candidate_id: canonicalRecord.candidate_id,
+        email,
+        email_verified: true,
+        institute_code: canonicalRecord.institute_code,
+        cohort_id: canonicalRecord.cohort_id || null,
+        tenant_id: "tenant_default",
+        roles: ["candidate"],
+        permissions: ["learning:read", "assessments:take", "tasks:read", "tasks:submit"],
+        allowedApps: canonicalRecord.allowedApps || [
+          "abhiruchi",
+          "sampada",
+          "hackaverse",
+          "niyantran",
+          "gurukul"
+        ],
+        lifecycle_status: canonicalRecord.lifecycle_status || "ENROLLED_ACTIVE"
+      };
+    } else {
+      // Allow synthetic test overrides in development only if institute_code is provided and valid
+      let normInstitute = null;
+      if (req.body.institute_code) {
+        normInstitute = normalizeInstituteCode(req.body.institute_code);
+        if (!APPROVED_INSTITUTES.includes(normInstitute)) {
+          return res.status(400).json({
+            error: `Invalid institute_code '${req.body.institute_code}'. Allowed: ${APPROVED_INSTITUTES.join(", ")}`,
+            allowed_codes: APPROVED_INSTITUTES
+          });
+        }
+      }
+
+      user = {
+        user_id: req.body.user_id || `usr_${Buffer.from(email).toString("hex").slice(0, 10)}`,
+        candidate_id: req.body.candidate_id || (normInstitute ? `BHIV-2026-${normInstitute}-001` : null),
+        email,
+        email_verified: req.body.email_verified ?? true,
+        institute_code: normInstitute,
+        cohort_id: req.body.cohort_id || null,
+        tenant_id: req.body.tenant_id || "tenant_default",
+        roles: req.body.roles || (normInstitute ? ["candidate"] : ["user"]),
+        permissions: req.body.permissions || ["learning:read", "assessments:take", "tasks:read", "tasks:submit"],
+        allowedApps: req.body.allowedApps || (normInstitute ? [
+          "abhiruchi",
+          "sampada",
+          "hackaverse",
+          "niyantran",
+          "gurukul",
+          "setu",
+          "mitra",
+          "vajra"
+        ] : []),
+        lifecycle_status: req.body.lifecycle_status || (normInstitute ? "ENROLLED_ACTIVE" : "UNENROLLED")
+      };
     }
   }
-
-  const user = {
-    user_id: req.body.user_id || `usr_${Buffer.from(email).toString("hex").slice(0, 10)}`,
-    candidate_id: candidate_id || (normInstitute ? `BHIV-2026-${normInstitute}-001` : null),
-    email,
-    email_verified: req.body.email_verified ?? true,
-    institute_code: normInstitute,
-    cohort_id: cohort_id || null,
-    tenant_id: tenant_id || "tenant_default",
-    roles: roles || ["candidate"],
-    permissions: permissions || ["learning:read", "assessments:take", "tasks:read", "tasks:submit"],
-    allowedApps: allowedApps || [
-      "abhiruchi",
-      "sampada",
-      "hackaverse",
-      "niyantran",
-      "gurukul",
-      "setu",
-      "mitra",
-      "vajra"
-    ],
-    lifecycle_status: lifecycle_status || "ENROLLED_ACTIVE"
-  };
 
   const token = jwt.sign(user, jwtSecret, { expiresIn: "8h" });
 
