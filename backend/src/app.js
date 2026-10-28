@@ -123,14 +123,76 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: "Email is required" });
 
+  const ALL_ADMIN_APPS = [
+    "setu",
+    "sampada",
+    "niyantran",
+    "gurukul",
+    "mitra",
+    "vajra",
+    "gov-ops",
+    "gov_ops",
+    "district-intelligence",
+    "district_intelligence",
+    "intelligence",
+    "abhiruchi",
+    "hackaverse"
+  ];
+
+  const ADMIN_EMAILS = [
+    "blackholeinfiverse90@gmail.com",
+    "admin@gurukul.com",
+    "admin@blackholeinfiverse.com"
+  ];
+
+  const isAdminEmail = (e) => {
+    if (!e) return false;
+    const lower = e.trim().toLowerCase();
+    if (ADMIN_EMAILS.includes(lower)) return true;
+    if (lower.endsWith("@blackholeinfiverse.com")) return true;
+    const envAdmins = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((x) => x.trim().toLowerCase())
+      .filter(Boolean);
+    return envAdmins.includes(lower);
+  };
+
   const isProduction = process.env.NODE_ENV === "production";
+
+  // Check if logging in as authorized administrator
+  const isAdmin = isAdminEmail(email);
 
   // Authoritative Trust Boundary: Resolve candidate identity strictly against Sampada registry
   const canonicalRecord = await resolveCanonicalCandidate(email);
 
   let user;
 
-  if (isProduction) {
+  if (isAdmin) {
+    // Authorized Administrator: grant full platform and app launcher access
+    user = {
+      user_id: `usr_${Buffer.from(email).toString("hex").slice(0, 10)}`,
+      candidate_id: canonicalRecord ? canonicalRecord.candidate_id : null,
+      email,
+      email_verified: true,
+      institute_code: canonicalRecord ? canonicalRecord.institute_code : null,
+      cohort_id: canonicalRecord ? canonicalRecord.cohort_id : null,
+      tenant_id: "tenant_default",
+      roles: ["admin"],
+      permissions: [
+        "all",
+        "admin",
+        "read",
+        "write",
+        "intelligence:view",
+        "intelligence:read",
+        "intelligence:write",
+        "intelligence:admin",
+        "intelligence:*"
+      ],
+      allowedApps: ALL_ADMIN_APPS,
+      lifecycle_status: "ACTIVE"
+    };
+  } else if (isProduction) {
     // In production, caller-supplied candidate_id, roles, and allowedApps are STRICTLY IGNORED!
     if (canonicalRecord) {
       user = {

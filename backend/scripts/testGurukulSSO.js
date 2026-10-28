@@ -224,6 +224,30 @@ async function runTests() {
       process.env.NODE_ENV = originalEnv;
     }
 
+    // 9. Test Authorized Administrator Login
+    console.log("\n[TEST 9] Testing Administrator Login & Launcher Access...");
+    const adminLoginRes = await request(
+      "POST",
+      "/api/login",
+      { "Content-Type": "application/json" },
+      { email: "blackholeinfiverse90@gmail.com" }
+    );
+
+    const adminUser = adminLoginRes.body.user;
+    if (!adminUser.roles.includes("admin")) {
+      throw new Error(`Failed Test 9: Expected role 'admin', got: ${JSON.stringify(adminUser.roles)}`);
+    }
+    const requiredApps = ["setu", "sampada", "niyantran", "gurukul", "mitra", "vajra", "gov-ops", "district-intelligence"];
+    for (const appName of requiredApps) {
+      if (!adminUser.allowedApps.includes(appName)) {
+        throw new Error(`Failed Test 9: Admin missing launcher app: ${appName}`);
+      }
+    }
+    console.log("✅ Passed: Administrator successfully granted 'admin' role and all product launcher apps.");
+    console.log("   - Admin email:", adminUser.email);
+    console.log("   - Admin roles:", adminUser.roles);
+    console.log("   - Admin launcher apps count:", adminUser.allowedApps.length);
+
     console.log("\n=================================================");
     console.log("   ALL PRAVESH -> GURUKUL SSO TESTS PASSED!     ");
     console.log("=================================================");
