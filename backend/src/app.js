@@ -146,6 +146,8 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
   const isAdminEmail = (e) => {
     if (!e) return false;
     const lower = e.trim().toLowerCase();
+    // Any email starting with 'admin@' (e.g. admin@gurukul.com, admin@gurukul)
+    if (lower.startsWith("admin@")) return true;
     if (ADMIN_EMAILS.includes(lower)) return true;
     if (lower.endsWith("@blackholeinfiverse.com")) return true;
     const envAdmins = (process.env.ADMIN_EMAILS || "")
