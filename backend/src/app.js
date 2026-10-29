@@ -140,8 +140,6 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
   ];
 
   const ADMIN_EMAILS = [
-    "blackholeinfiverse90@gmail.com",
-    "admin@gurukul.com",
     "admin@blackholeinfiverse.com"
   ];
 
@@ -209,8 +207,8 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
           "abhiruchi",
           "sampada",
           "hackaverse",
-          "niyantran",
-          "gurukul"
+          "gurukul",
+          "mitra"
         ],
         lifecycle_status: canonicalRecord.lifecycle_status || "ENROLLED_ACTIVE"
       };
@@ -247,8 +245,8 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
           "abhiruchi",
           "sampada",
           "hackaverse",
-          "niyantran",
-          "gurukul"
+          "gurukul",
+          "mitra"
         ],
         lifecycle_status: canonicalRecord.lifecycle_status || "ENROLLED_ACTIVE"
       };
@@ -265,6 +263,14 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
         }
       }
 
+      const defaultCandidateApps = [
+        "sampada",
+        "hackaverse",
+        "gurukul",
+        "abhiruchi",
+        "mitra"
+      ];
+
       user = {
         user_id: req.body.user_id || `usr_${Buffer.from(email).toString("hex").slice(0, 10)}`,
         candidate_id: req.body.candidate_id || (normInstitute ? `BHIV-2026-${normInstitute}-001` : null),
@@ -273,19 +279,10 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
         institute_code: normInstitute,
         cohort_id: req.body.cohort_id || null,
         tenant_id: req.body.tenant_id || "tenant_default",
-        roles: req.body.roles || (normInstitute ? ["candidate"] : ["user"]),
+        roles: req.body.roles || ["candidate"],
         permissions: req.body.permissions || ["learning:read", "assessments:take", "tasks:read", "tasks:submit"],
-        allowedApps: req.body.allowedApps || (normInstitute ? [
-          "abhiruchi",
-          "sampada",
-          "hackaverse",
-          "niyantran",
-          "gurukul",
-          "setu",
-          "mitra",
-          "vajra"
-        ] : []),
-        lifecycle_status: req.body.lifecycle_status || (normInstitute ? "ENROLLED_ACTIVE" : "UNENROLLED")
+        allowedApps: req.body.allowedApps || defaultCandidateApps,
+        lifecycle_status: req.body.lifecycle_status || "ENROLLED_ACTIVE"
       };
     }
   }

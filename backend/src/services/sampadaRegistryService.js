@@ -52,6 +52,14 @@ const initialSeeds = [
     cohort_id: "COHORT-2026-OCT-C",
     lifecycle_status: "ENROLLED_ACTIVE",
     allowedApps: ["gurukul", "niyantran", "hackaverse", "sampada", "abhiruchi"]
+  },
+  {
+    candidate_id: "BHIV-2026-MSSU-0001",
+    email: "blackholeinfiverse90@gmail.com",
+    institute_code: "MSSU",
+    cohort_id: "COHORT-2026-OCT-A",
+    lifecycle_status: "ENROLLED_ACTIVE",
+    allowedApps: ["gurukul", "niyantran", "hackaverse", "sampada", "abhiruchi"]
   }
 ];
 
@@ -68,16 +76,26 @@ async function resolveCanonicalCandidate(email) {
   if (!email) return null;
   const normalizedEmail = email.trim().toLowerCase();
 
-  const sampadaApiUrl = process.env.SAMPADA_API_URL;
+  const sampadaApiUrl = process.env.SAMPADA_API_URL || "http://localhost:8000";
   if (sampadaApiUrl) {
     try {
-      const res = await fetch(`${sampadaApiUrl}/api/candidates/verify?email=${encodeURIComponent(normalizedEmail)}`, {
-        headers: { "X-Service-Auth": process.env.INTERNAL_SERVICE_KEY || "bhiv-internal-service" }
+      const authHeader = process.env.INTERNAL_SERVICE_KEY || process.env.SAMPADA_API_KEY || "team2_smoke_gw_key";
+      const res = await fetch(`${sampadaApiUrl}/api/v1/identity/candidate/${encodeURIComponent(normalizedEmail)}`, {
+        headers: { "Authorization": `Bearer ${authHeader}`, "X-API-Key": authHeader }
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.candidate && APPROVED_INSTITUTES.includes(data.candidate.institute_code)) {
-          return data.candidate;
+        const cand = data.record || data.candidate;
+        if (cand && (cand.canonical_candidate_id || cand.candidate_id)) {
+          const normInst = cand.institute_code === "RTMSSU" ? "MSSU" : cand.institute_code;
+          return {
+            candidate_id: cand.canonical_candidate_id || cand.candidate_id,
+            email: cand.email || normalizedEmail,
+            institute_code: normInst,
+            cohort_id: cand.cohort_id || "COHORT-2026-OCT-A",
+            lifecycle_status: cand.lifecycle_status || "ENROLLED_ACTIVE",
+            allowedApps: ["gurukul", "niyantran", "hackaverse", "sampada", "abhiruchi"]
+          };
         }
       }
     } catch (err) {

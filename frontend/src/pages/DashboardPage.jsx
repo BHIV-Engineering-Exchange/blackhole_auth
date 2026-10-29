@@ -97,14 +97,13 @@ const DashboardPage = () => {
       </section>
 
       <section className="app-grid">
-        {ALL_APPS.map((app) => {
-          const disabled = !allowedSet.has(app.key);
+        {visibleApps.map((app) => {
           return (
             <AppCard
               key={app.key}
               app={app}
               onLaunch={launchApp}
-              disabled={disabled || launchingKey.length > 0}
+              disabled={launchingKey.length > 0}
             />
           );
         })}
