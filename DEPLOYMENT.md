@@ -74,11 +74,15 @@ CORS_ORIGINS=https://products.blackholeinfiverse.com,https://auth.blackholeinfiv
 
 ### B. Frontend Configuration (`frontend/.env`)
 
-Template: [frontend/.env.production.template](file:///c:/Users/ASUS/OneDrive/Desktop/BHIV-Tasks/BHIV_auth/blackhole_auth/frontend/.env.production.template)
-
 ```env
-VITE_API_BASE_URL=https://auth.blackholeinfiverse.com
-VITE_AUTH_SERVER_URL=https://auth.blackholeinfiverse.com
+VITE_API_BASE_URL=https://pravesh.blackholeinfiverse.com
+VITE_AUTH_SERVER_URL=https://pravesh.blackholeinfiverse.com
+
+# Target App Launcher URLs
+VITE_SAMPADA_URL=https://sampada.blackholeinfiverse.com
+VITE_HACKAVERSE_URL=https://hackaverse.blackholeinfiverse.com/app?sso=pravesh
+VITE_GURUKUL_URL=https://gurukul.blackholeinfiverse.com
+VITE_SETU_URL=https://setu.blackholeinfiverse.com
 ```
 
 > [!NOTE]
@@ -177,9 +181,13 @@ Configure the following secrets in GitHub (**Settings > Secrets and variables > 
 | `VM_USERNAME` | Remote VM SSH user | `ubuntu` or `root` |
 | `VM_PASSWORD` | Remote VM SSH password | `********` |
 | `BACKEND_ENV_FILE` | Full contents of backend production `.env` | (Contents of backend production template) |
-| `FRONTEND_ENV_FILE` | Full contents of frontend production `.env` | (Contents of frontend production template) |
-| `VITE_API_BASE_URL` | *(Optional)* Override for frontend API base URL | `https://auth.blackholeinfiverse.com` |
-| `VITE_AUTH_SERVER_URL` | *(Optional)* Override for auth server URL | `https://auth.blackholeinfiverse.com` |
+| `FRONTEND_ENV_FILE` | Full contents of frontend production `.env` | (Contents of frontend production environment) |
+| `VITE_API_BASE_URL` | *(Optional)* Override for frontend API base URL | `https://pravesh.blackholeinfiverse.com` |
+| `VITE_AUTH_SERVER_URL` | *(Optional)* Override for auth server URL | `https://pravesh.blackholeinfiverse.com` |
+| `VITE_SAMPADA_URL` | *(Optional)* Override for Sampada URL | `https://sampada.blackholeinfiverse.com` |
+| `VITE_HACKAVERSE_URL` | *(Optional)* Override for Hackaverse SSO URL | `https://hackaverse.blackholeinfiverse.com/app?sso=pravesh` |
+| `VITE_GURUKUL_URL` | *(Optional)* Override for Gurukul URL | `https://gurukul.blackholeinfiverse.com` |
+| `VITE_SETU_URL` | *(Optional)* Override for Setu URL | `https://setu.blackholeinfiverse.com` |
 
 ---
 
