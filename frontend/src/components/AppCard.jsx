@@ -1,16 +1,13 @@
-const AppCard = ({ app, onLaunch, disabled }) => (
+const AppCard = ({ app, onLaunch, disabled, launching }) => (
   <article className="app-card">
     <h3>{app.name}</h3>
     <p>{app.description}</p>
     <button
       type="button"
-      onClick={() => {
-        console.log("AppCard clicked:", app, "disabled:", disabled);
-        onLaunch(app);
-      }}
+      onClick={() => onLaunch(app)}
       disabled={disabled}
     >
-      {disabled ? "No Access" : "Open App"}
+      {launching ? "Launching…" : disabled ? "Please wait…" : "Open App"}
     </button>
   </article>
 );

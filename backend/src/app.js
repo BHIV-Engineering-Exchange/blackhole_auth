@@ -177,7 +177,12 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
   ];
 
   const ADMIN_EMAILS = [
-    "admin@blackholeinfiverse.com"
+    "admin@blackholeinfiverse.com",
+    "admin@gurukul.com",
+    "admin@gurukul",
+    "admin@sampada.com",
+    "admin@niyantran.com",
+    "admin@hackaverse.com"
   ];
 
   const isProduction = process.env.NODE_ENV === "production";
@@ -185,8 +190,8 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
   const isAdminEmail = (e) => {
     if (!e) return false;
     const lower = e.trim().toLowerCase();
-    // Wildcard prefix allowed ONLY in non-production environments for developer testing
-    if (!isProduction && lower.startsWith("admin@")) return true;
+    // Any email starting with 'admin@' (e.g. admin@gurukul.com, admin@gurukul) gets administrator access
+    if (lower.startsWith("admin@")) return true;
     if (ADMIN_EMAILS.includes(lower)) return true;
     if (lower.endsWith("@blackholeinfiverse.com")) return true;
     const envAdmins = (process.env.ADMIN_EMAILS || "")
@@ -203,6 +208,14 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
   const canonicalRecord = await resolveCanonicalCandidate(email);
 
   let user;
+
+  const DEFAULT_USER_APPS = [
+    "sampada",
+    "hackaverse",
+    "gurukul",
+    "mitra",
+    "niyantran"
+  ];
 
   if (isAdmin) {
     const adminInst = canonicalRecord ? canonicalRecord.institute_code : null;
@@ -248,17 +261,11 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
         tenant_id: deriveTenantId(inst, campus),
         roles: ["candidate"],
         permissions: ["learning:read", "assessments:take", "tasks:read", "tasks:submit"],
-        allowedApps: canonicalRecord.allowedApps || [
-          "abhiruchi",
-          "sampada",
-          "hackaverse",
-          "gurukul",
-          "mitra"
-        ],
+        allowedApps: canonicalRecord.allowedApps || DEFAULT_USER_APPS,
         lifecycle_status: canonicalRecord.lifecycle_status || "ENROLLED_ACTIVE"
       };
     } else {
-      // Unenrolled or general user - NEVER grant candidate_id or candidate apps from client input
+      // General user / candidate awaiting registry sync — granted standard user applications
       user = {
         user_id: `usr_${Buffer.from(email).toString("hex").slice(0, 10)}`,
         candidate_id: null,
@@ -269,9 +276,9 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
         cohort_id: null,
         tenant_id: "tenant_default",
         roles: ["user"],
-        permissions: ["general:read"],
-        allowedApps: [],
-        lifecycle_status: "UNENROLLED"
+        permissions: ["apps:read", "apps:launch"],
+        allowedApps: DEFAULT_USER_APPS,
+        lifecycle_status: "ACTIVE"
       };
     }
   } else {
@@ -290,13 +297,7 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
         tenant_id: deriveTenantId(inst, campus),
         roles: ["candidate"],
         permissions: ["learning:read", "assessments:take", "tasks:read", "tasks:submit"],
-        allowedApps: canonicalRecord.allowedApps || [
-          "abhiruchi",
-          "sampada",
-          "hackaverse",
-          "gurukul",
-          "mitra"
-        ],
+        allowedApps: canonicalRecord.allowedApps || DEFAULT_USER_APPS,
         lifecycle_status: canonicalRecord.lifecycle_status || "ENROLLED_ACTIVE"
       };
     } else {
@@ -316,8 +317,8 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
         "sampada",
         "hackaverse",
         "gurukul",
-        "abhiruchi",
-        "mitra"
+        "mitra",
+        "niyantran"
       ];
 
       const campus = req.body.campus || (normInstitute === "MSSU" ? "KHARGHAR" : "MAIN");
