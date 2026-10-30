@@ -44,8 +44,9 @@ Cookie: blackhole_token=<JWT_TOKEN>
     "email": "candidate.mssu@student.edu",
     "email_verified": true,
     "institute_code": "MSSU",
+    "campus": "KHARGHAR",
     "cohort_id": "COHORT-2026-OCT-A",
-    "tenant_id": "tenant_default",
+    "tenant_id": "tenant_mssu_kharghar",
     "roles": ["candidate"],
     "permissions": ["learning:read", "assessments:take", "tasks:read"],
     "allowedApps": ["gurukul", "niyantran", "hackaverse", "sampada", "abhiruchi"],
@@ -140,3 +141,32 @@ When candidates complete learning modules or quizzes, Gurukul must emit progress
   "schema_version": "1.0.0"
 }
 ```
+
+---
+
+## 5. Campus, Tenant, and Production Security Guarantees
+
+### A. Authoritative Claims: Campus & Tenant ID
+To eliminate discrepancies between client input and Gurukul multi-tenant routing:
+* **`campus` Claim (Enum):**
+  * For `institute_code: "MSSU"`: `"KHARGHAR"` or `"PUNE"`.
+  * For other institutes: `"MAIN"` (e.g. Akurdi, Pune, Nashik, Mumbai).
+* **`tenant_id` Derivation Matrix (Deterministic, Server-Derived):**
+  | `institute_code` | `campus` | Authoritative `tenant_id` | Gurukul Tenant Scope |
+  |---|---|---|---|
+  | `MSSU` | `KHARGHAR` | `tenant_mssu_kharghar` | MSSU Kharghar Campus |
+  | `MSSU` | `PUNE` | `tenant_mssu_pune` | MSSU Pune Campus |
+  | `DYP-A` | `MAIN` | `tenant_dyp_akurdi` | DY Patil Akurdi |
+  | `SIT-S` | `MAIN` | `tenant_sit_pune` | Symbiosis Pune |
+  | `SIPS-S` | `MAIN` | `tenant_sips_nashik` | Sandip Nashik |
+  | `VJTI` | `MAIN` | `tenant_vjti_mumbai` | VJTI Mumbai |
+
+### B. Production Trust Boundary (Zero Client-Supplied Identities)
+* **Strict Sampada Verification:** In production (`NODE_ENV=production`), caller-supplied `candidate_id`, `roles`, `tenant_id`, and `allowedApps` in the request body are **strictly ignored**.
+* **Canonical Only:** The `candidate_id` and `tenant_id` are populated **exclusively** from the verified canonical record returned by Sampada (`/api/v1/identity/candidate/:email`).
+* **Unenrolled Fallback:** If an email is not enrolled in Sampada, Pravesh returns `candidate_id: null`, `roles: ["user"]`, and `allowedApps: []`. Synthetic fallback generation (`BHIV-2026-${inst}-001`) is strictly isolated to development/test harnesses (`NODE_ENV !== "production"`).
+
+### C. Admin Role-Grant Security Boundary
+* **Development/Staging:** `admin@...` wildcard prefix is permitted purely for local developer convenience to test admin panels without mock databases.
+* **Production Restriction:** Wildcard prefix is **strictly disabled** in production. Administrative privileges are only granted to explicit entries in `ADMIN_EMAILS` or audited `@blackholeinfiverse.com` identity accounts.
+

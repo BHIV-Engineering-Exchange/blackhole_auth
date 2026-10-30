@@ -17,6 +17,7 @@ const initialSeeds = [
     candidate_id: "BHIV-2026-MSSU-0085",
     email: "candidate.mssu@test.bhiv.com",
     institute_code: "MSSU",
+    campus: "KHARGHAR",
     cohort_id: "COHORT-2026-OCT-A",
     lifecycle_status: "ENROLLED_ACTIVE",
     allowedApps: ["gurukul", "niyantran", "hackaverse", "sampada", "abhiruchi"]
@@ -25,6 +26,7 @@ const initialSeeds = [
     candidate_id: "BHIV-2026-DYPA-0001",
     email: "candidate.dypa@test.bhiv.com",
     institute_code: "DYP-A",
+    campus: "MAIN",
     cohort_id: "COHORT-2026-OCT-A",
     lifecycle_status: "ENROLLED_ACTIVE",
     allowedApps: ["gurukul", "niyantran", "hackaverse", "sampada", "abhiruchi"]
@@ -33,6 +35,7 @@ const initialSeeds = [
     candidate_id: "BHIV-2026-SITS-0001",
     email: "candidate.sits@test.bhiv.com",
     institute_code: "SIT-S",
+    campus: "MAIN",
     cohort_id: "COHORT-2026-OCT-B",
     lifecycle_status: "ENROLLED_ACTIVE",
     allowedApps: ["gurukul", "niyantran", "hackaverse", "sampada", "abhiruchi"]
@@ -41,6 +44,7 @@ const initialSeeds = [
     candidate_id: "BHIV-2026-SIPSS-0001",
     email: "candidate.sipss@test.bhiv.com",
     institute_code: "SIPS-S",
+    campus: "MAIN",
     cohort_id: "COHORT-2026-OCT-B",
     lifecycle_status: "ENROLLED_ACTIVE",
     allowedApps: ["gurukul", "niyantran", "hackaverse", "sampada", "abhiruchi"]
@@ -49,6 +53,7 @@ const initialSeeds = [
     candidate_id: "BHIV-2026-VJTI-0001",
     email: "candidate.vjti@test.bhiv.com",
     institute_code: "VJTI",
+    campus: "MAIN",
     cohort_id: "COHORT-2026-OCT-C",
     lifecycle_status: "ENROLLED_ACTIVE",
     allowedApps: ["gurukul", "niyantran", "hackaverse", "sampada", "abhiruchi"]
@@ -57,6 +62,7 @@ const initialSeeds = [
     candidate_id: "BHIV-2026-MSSU-0001",
     email: "blackholeinfiverse90@gmail.com",
     institute_code: "MSSU",
+    campus: "KHARGHAR",
     cohort_id: "COHORT-2026-OCT-A",
     lifecycle_status: "ENROLLED_ACTIVE",
     allowedApps: ["gurukul", "niyantran", "hackaverse", "sampada", "abhiruchi"]
@@ -88,10 +94,12 @@ async function resolveCanonicalCandidate(email) {
         const cand = data.record || data.candidate;
         if (cand && (cand.canonical_candidate_id || cand.candidate_id)) {
           const normInst = cand.institute_code === "RTMSSU" ? "MSSU" : cand.institute_code;
+          const campus = cand.campus || (normInst === "MSSU" ? "KHARGHAR" : "MAIN");
           return {
             candidate_id: cand.canonical_candidate_id || cand.candidate_id,
             email: cand.email || normalizedEmail,
             institute_code: normInst,
+            campus: campus,
             cohort_id: cand.cohort_id || "COHORT-2026-OCT-A",
             lifecycle_status: cand.lifecycle_status || "ENROLLED_ACTIVE",
             allowedApps: ["gurukul", "niyantran", "hackaverse", "sampada", "abhiruchi"]

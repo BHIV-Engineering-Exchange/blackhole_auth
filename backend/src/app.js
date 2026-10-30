@@ -16,6 +16,21 @@ const normalizeInstituteCode = (code) => {
   return upper;
 };
 
+const deriveTenantId = (instituteCode, campus) => {
+  if (!instituteCode) return "tenant_default";
+  const inst = String(instituteCode).trim().toUpperCase();
+  const camp = String(campus || "").trim().toUpperCase();
+  if (inst === "MSSU" || inst === "RTMSSU") {
+    if (camp === "PUNE") return "tenant_mssu_pune";
+    return "tenant_mssu_kharghar";
+  }
+  if (inst === "DYP-A") return "tenant_dyp_akurdi";
+  if (inst === "SIT-S") return "tenant_sit_pune";
+  if (inst === "SIPS-S") return "tenant_sips_nashik";
+  if (inst === "VJTI") return "tenant_vjti_mumbai";
+  return "tenant_default";
+};
+
 const app = express();
 
 app.use(helmet());
@@ -82,6 +97,7 @@ app.get(["/api/auth/contract", "/api/contract"], (req, res) => {
     contract_version: "1.0.0",
     service: "Pravesh Single Auth & Application Access",
     approved_institute_codes: APPROVED_INSTITUTES,
+    approved_campuses: ["KHARGHAR", "PUNE", "MAIN"],
     cookie: {
       name: "blackhole_token",
       domain: cookieDomain || ".blackholeinfiverse.com",
@@ -96,7 +112,9 @@ app.get(["/api/auth/contract", "/api/contract"], (req, res) => {
       "email",
       "email_verified",
       "institute_code",
+      "campus",
       "cohort_id",
+      "tenant_id",
       "roles",
       "allowedApps",
       "lifecycle_status"
@@ -143,11 +161,13 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
     "admin@blackholeinfiverse.com"
   ];
 
+  const isProduction = process.env.NODE_ENV === "production";
+
   const isAdminEmail = (e) => {
     if (!e) return false;
     const lower = e.trim().toLowerCase();
-    // Any email starting with 'admin@' (e.g. admin@gurukul.com, admin@gurukul)
-    if (lower.startsWith("admin@")) return true;
+    // Wildcard prefix allowed ONLY in non-production environments for developer testing
+    if (!isProduction && lower.startsWith("admin@")) return true;
     if (ADMIN_EMAILS.includes(lower)) return true;
     if (lower.endsWith("@blackholeinfiverse.com")) return true;
     const envAdmins = (process.env.ADMIN_EMAILS || "")
@@ -156,8 +176,6 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
       .filter(Boolean);
     return envAdmins.includes(lower);
   };
-
-  const isProduction = process.env.NODE_ENV === "production";
 
   // Check if logging in as authorized administrator
   const isAdmin = isAdminEmail(email);
@@ -168,15 +186,18 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
   let user;
 
   if (isAdmin) {
+    const adminInst = canonicalRecord ? canonicalRecord.institute_code : null;
+    const adminCampus = canonicalRecord ? canonicalRecord.campus : null;
     // Authorized Administrator: grant full platform and app launcher access
     user = {
       user_id: `usr_${Buffer.from(email).toString("hex").slice(0, 10)}`,
       candidate_id: canonicalRecord ? canonicalRecord.candidate_id : null,
       email,
       email_verified: true,
-      institute_code: canonicalRecord ? canonicalRecord.institute_code : null,
+      institute_code: adminInst,
+      campus: adminCampus || (adminInst === "MSSU" ? "KHARGHAR" : "MAIN"),
       cohort_id: canonicalRecord ? canonicalRecord.cohort_id : null,
-      tenant_id: "tenant_default",
+      tenant_id: deriveTenantId(adminInst, adminCampus),
       roles: ["admin"],
       permissions: [
         "all",
@@ -195,14 +216,17 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
   } else if (isProduction) {
     // In production, caller-supplied candidate_id, roles, and allowedApps are STRICTLY IGNORED!
     if (canonicalRecord) {
+      const inst = canonicalRecord.institute_code;
+      const campus = canonicalRecord.campus || (inst === "MSSU" ? "KHARGHAR" : "MAIN");
       user = {
         user_id: `usr_${Buffer.from(email).toString("hex").slice(0, 10)}`,
         candidate_id: canonicalRecord.candidate_id,
         email,
         email_verified: true,
-        institute_code: canonicalRecord.institute_code,
+        institute_code: inst,
+        campus: campus,
         cohort_id: canonicalRecord.cohort_id || null,
-        tenant_id: "tenant_default",
+        tenant_id: deriveTenantId(inst, campus),
         roles: ["candidate"],
         permissions: ["learning:read", "assessments:take", "tasks:read", "tasks:submit"],
         allowedApps: canonicalRecord.allowedApps || [
@@ -222,6 +246,7 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
         email,
         email_verified: true,
         institute_code: null,
+        campus: null,
         cohort_id: null,
         tenant_id: "tenant_default",
         roles: ["user"],
@@ -233,14 +258,17 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
   } else {
     // Non-production / Test Harness Mode
     if (canonicalRecord) {
+      const inst = canonicalRecord.institute_code;
+      const campus = canonicalRecord.campus || (inst === "MSSU" ? "KHARGHAR" : "MAIN");
       user = {
         user_id: req.body.user_id || `usr_${Buffer.from(email).toString("hex").slice(0, 10)}`,
         candidate_id: canonicalRecord.candidate_id,
         email,
         email_verified: true,
-        institute_code: canonicalRecord.institute_code,
+        institute_code: inst,
+        campus: campus,
         cohort_id: canonicalRecord.cohort_id || null,
-        tenant_id: "tenant_default",
+        tenant_id: deriveTenantId(inst, campus),
         roles: ["candidate"],
         permissions: ["learning:read", "assessments:take", "tasks:read", "tasks:submit"],
         allowedApps: canonicalRecord.allowedApps || [
@@ -273,14 +301,17 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
         "mitra"
       ];
 
+      const campus = req.body.campus || (normInstitute === "MSSU" ? "KHARGHAR" : "MAIN");
+
       user = {
         user_id: req.body.user_id || `usr_${Buffer.from(email).toString("hex").slice(0, 10)}`,
         candidate_id: req.body.candidate_id || (normInstitute ? `BHIV-2026-${normInstitute}-001` : null),
         email,
         email_verified: req.body.email_verified ?? true,
         institute_code: normInstitute,
+        campus: campus,
         cohort_id: req.body.cohort_id || null,
-        tenant_id: req.body.tenant_id || "tenant_default",
+        tenant_id: deriveTenantId(normInstitute, campus),
         roles: req.body.roles || ["candidate"],
         permissions: req.body.permissions || ["learning:read", "assessments:take", "tasks:read", "tasks:submit"],
         allowedApps: req.body.allowedApps || defaultCandidateApps,
