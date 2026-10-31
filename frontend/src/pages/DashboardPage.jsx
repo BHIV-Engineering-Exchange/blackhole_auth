@@ -115,12 +115,21 @@ const DashboardPage = () => {
             app={app}
             onLaunch={launchApp}
             disabled={launchingKey.length > 0}
+            launching={launchingKey === app.key}
           />
         ))}
       </section>
 
       {visibleApps.length === 0 && !appsError ? (
-        <p className="empty-state">No products registered yet. Contact your administrator.</p>
+        <div className="empty-state">
+          <p>No products available for your account.</p>
+          <p style={{ fontSize: "0.85rem", opacity: 0.7 }}>
+            {user?.allowedApps?.length
+              ? `Your access list: ${user.allowedApps.join(", ")}`
+              : "No apps have been assigned to your account yet."}
+            {" "}Contact your administrator if this seems incorrect.
+          </p>
+        </div>
       ) : null}
     </main>
   );
