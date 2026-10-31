@@ -115,7 +115,7 @@ async function resolveCanonicalCandidate(email) {
   const abhiruchiApiUrl = process.env.ABHIRUCHI_API_URL || "https://abhiruchi.blackholeinfiverse.com/api";
   if (abhiruchiApiUrl) {
     try {
-      const res = await fetch(`${abhiruchiApiUrl}/students`, { signal: AbortSignal.timeout(4000) });
+      const res = await fetch(`${abhiruchiApiUrl}/students`, { signal: AbortSignal.timeout(12000) });
       if (res.ok) {
         const data = await res.json();
         const list = Array.isArray(data) ? data : (data.students || data.data || []);
