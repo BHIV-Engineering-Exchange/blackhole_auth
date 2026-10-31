@@ -32,7 +32,7 @@
       "name": "Gurukul",
       "description": "Learning access, courses, and assessments",
       "url": "https://gurukul.blackholeinfiverse.com",
-      "devUrl": "http://localhost:5173"
+      "devUrl": "http://localhost:5174/#/?sso=pravesh"
     },
     {
       "key": "mitra",

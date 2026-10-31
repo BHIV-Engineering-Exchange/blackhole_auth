@@ -67,10 +67,14 @@ const DashboardPage = () => {
       // into its own sign-in page.
       await client.get("/api/sso/guest").catch(() => {});
 
-      const opened = window.open(app.url, "_blank");
+      const targetUrl =
+        (import.meta.env.DEV || window.location.hostname === "localhost") && app.devUrl
+          ? app.devUrl
+          : app.url;
+      const opened = window.open(targetUrl, "_blank");
       if (!opened) {
         // Popup blocked — open the product in this tab instead of doing nothing.
-        window.location.href = app.url;
+        window.location.href = targetUrl;
       }
     } catch (err) {
       console.error("Error launching app:", err);

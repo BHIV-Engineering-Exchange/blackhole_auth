@@ -213,6 +213,7 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
     "sampada",
     "hackaverse",
     "gurukul",
+    
     "mitra",
     "niyantran"
   ];
@@ -276,9 +277,9 @@ app.post(["/api/login", "/api/auth/login", "/login", "/auth/login"], async (req,
         cohort_id: null,
         tenant_id: "tenant_default",
         roles: ["user"],
-        permissions: ["apps:read", "apps:launch"],
-        allowedApps: DEFAULT_USER_APPS,
-        lifecycle_status: "ACTIVE"
+        permissions: ["general:read"],
+        allowedApps: [],
+        lifecycle_status: "UNENROLLED"
       };
     }
   } else {
