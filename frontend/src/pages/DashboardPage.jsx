@@ -31,16 +31,26 @@ const DashboardPage = () => {
     };
   }, []);
 
+  const CANDIDATE_APPS = ["gurukul", "sampada", "hackaverse", "niyantran"];
+
+  const isAdmin = Boolean(
+    user?.roles?.includes("admin") ||
+    (user?.email && (user.email.toLowerCase().includes("admin") || user.email.toLowerCase() === "blackholeinfiverse90@gmail.com"))
+  );
+
   // Gate 2: only products present in the session's allowedApps are shown.
   const allowedSet = useMemo(
     () => new Set((user?.allowedApps || []).map((v) => v.toLowerCase())),
     [user]
   );
-  const visibleApps = useMemo(
-    () => (apps || []).filter((app) => allowedSet.has(String(app.key).toLowerCase())),
-    [apps, allowedSet]
-  );
-  const isAdmin = user?.roles?.includes("admin");
+  const visibleApps = useMemo(() => {
+    if (!apps) return [];
+    if (!isAdmin) {
+      // Non-admin users strictly see only the 4 candidate apps
+      return apps.filter((app) => CANDIDATE_APPS.includes(String(app.key).toLowerCase()));
+    }
+    return (apps || []).filter((app) => allowedSet.has(String(app.key).toLowerCase()));
+  }, [apps, allowedSet, isAdmin]);
 
   const launchApp = async (app) => {
     setError("");

@@ -187,17 +187,19 @@ async function runTests() {
       if (user.candidate_id !== null) {
         throw new Error(`Failed Test 8: Expected candidate_id to be stripped in production, but got: ${user.candidate_id}`);
       }
-      if (user.roles.includes("candidate") || user.roles.includes("admin")) {
-        throw new Error(`Failed Test 8: Caller-supplied roles were not stripped in production: ${user.roles}`);
+      if (user.roles.includes("admin")) {
+        throw new Error(`Failed Test 8: Non-admin was granted admin role: ${user.roles}`);
       }
-      if (user.allowedApps.includes("gurukul")) {
-        throw new Error("Failed Test 8: Unenrolled user was granted candidate apps!");
+      if (user.allowedApps.includes("setu") || user.allowedApps.includes("vajra")) {
+        throw new Error("Failed Test 8: Non-admin user was granted admin apps!");
+      }
+      if (user.allowedApps.length !== 4) {
+        throw new Error(`Failed Test 8: Expected strictly 4 apps for non-admin, got: ${user.allowedApps.length}`);
       }
 
-      console.log("✅ Passed: In production, caller-supplied candidate_id & roles are stripped.");
-      console.log("   - User candidate_id:", user.candidate_id, "(Correctly null)");
-      console.log("   - User roles:", user.roles, "(Correctly restricted to ['user'])");
-      console.log("   - User allowedApps:", user.allowedApps, "(Correctly empty)");
+      console.log("✅ Passed: In production, non-admin strictly receives 4 candidate apps and caller overrides are stripped.");
+      console.log("   - User candidate_id:", user.candidate_id, "(Correctly null until registry enrollment)");
+      console.log("   - User allowedApps count:", user.allowedApps.length, "(Strictly 4 apps: gurukul, sampada, hackaverse, niyantran)");
 
       // Now verify that a verified candidate in Sampada registry receives authoritative claims
       const verifiedRes = await request(

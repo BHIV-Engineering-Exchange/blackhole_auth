@@ -102,16 +102,47 @@ async function resolveCanonicalCandidate(email) {
             campus: campus,
             cohort_id: cand.cohort_id || "COHORT-2026-OCT-A",
             lifecycle_status: cand.lifecycle_status || "ENROLLED_ACTIVE",
-            allowedApps: ["gurukul", "niyantran", "hackaverse", "sampada", "abhiruchi"]
+            allowedApps: ["gurukul", "sampada", "hackaverse", "niyantran"]
           };
         }
       }
     } catch (err) {
-      console.error("[SampadaRegistry] Failed to query live Sampada API:", err.message);
+      // Sampada API query error
     }
   }
 
-  // Fallback to verified canonical registry
+  // 2. Query live Abhiruchi students registry (automated candidate intake sync)
+  const abhiruchiApiUrl = process.env.ABHIRUCHI_API_URL || "https://abhiruchi.blackholeinfiverse.com/api";
+  if (abhiruchiApiUrl) {
+    try {
+      const res = await fetch(`${abhiruchiApiUrl}/students`, { signal: AbortSignal.timeout(4000) });
+      if (res.ok) {
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : (data.students || data.data || []);
+        const matched = list.find((s) => (s.email || "").trim().toLowerCase() === normalizedEmail);
+        if (matched && (matched.candidate_id || matched.student_id)) {
+          const cid = matched.candidate_id || matched.student_id;
+          const inst = matched.institute_code || (cid.split("-")[2]) || "MSSU";
+          const campus = inst === "MSSU" ? "KHARGHAR" : "MAIN";
+          const record = {
+            candidate_id: cid,
+            email: matched.email || normalizedEmail,
+            institute_code: inst,
+            campus: campus,
+            cohort_id: "COHORT-2026-OCT-A",
+            lifecycle_status: "ENROLLED_ACTIVE",
+            allowedApps: ["gurukul", "sampada", "hackaverse", "niyantran"]
+          };
+          verifiedRegistry.set(normalizedEmail, record);
+          return record;
+        }
+      }
+    } catch (err) {
+      // Abhiruchi offline or timeout — fall through safely
+    }
+  }
+
+  // 3. Fallback to verified canonical registry
   const match = verifiedRegistry.get(normalizedEmail);
   if (match) {
     return { ...match };
